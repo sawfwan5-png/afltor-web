@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ludo Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,'Hind Siliguri',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#080810;color:#fff;padding-bottom:30px}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #ffffff22;background:#ffffff0d;color:#fff;font-size:14px;outline:none;margin-bottom:8px}
+select option{background:#1a1a2e}
+label{font-size:11px;color:#8892b0;font-weight:700;display:block;margin-bottom:4px}
+.b{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:800;font-size:12px;cursor:pointer}
+.b:active{transform:scale(.96)}.b.g{background:#10b98133;color:#10b981}.b.r{background:#ef444433;color:#ef4444}.b.y{background:#f59e0b33;color:#f59e0b}
+#lock{position:fixed;inset:0;background:#080810;z-index:99;display:flex;flex-direction:column;justify-content:center;padding:30px;gap:10px;text-align:center}
+header{padding:16px;font-weight:800;font-size:18px;border-bottom:1px solid #ffffff14;position:sticky;top:0;background:#080810;z-index:10}
+.tabs{display:flex;gap:8px;padding:12px}.tabs div{flex:1;text-align:center;padding:10px 2px;border-radius:10px;background:#ffffff0d;font-size:12px;font-weight:800;color:#8892b0}
+.tabs div.on{background:#6366f1;color:#fff}
+.sec{display:none;padding:0 12px}.sec.on{display:block}
+.card{background:#14142a;border:1px solid #ffffff12;border-radius:16px;padding:14px;margin-bottom:12px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.hd b{font-size:14px}
+.pill{font-size:10px;padding:4px 10px;border-radius:20px;font-weight:800;background:#6366f126;color:#a5b4fc;white-space:nowrap}
+.pill.open{background:#10b98126;color:#10b981}.pill.full{background:#f59e0b26;color:#f59e0b}.pill.live{background:#06b6d426;color:#06b6d4}.pill.done{background:#ffffff14;color:#8892b0}
+.d{font-size:12px;color:#8892b0;margin:3px 0}.d span{color:#fff;font-weight:700}
+.act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.rm{display:flex;gap:8px;margin-top:10px}.rm input{margin:0}
+</style></head><body>
+<div id="lock"><h2>🔐 Admin PIN</h2><input id="pin" type="password" inputmode="numeric" placeholder="PIN"><button class="b" onclick="go()">ঢুকুন</button></div>
+<header>🎲 LUDO ADMIN</header>
+<div class="tabs"><div id="t-d" onclick="tab('d')">ড্যাশ</div><div id="t-m" class="on" onclick="tab('m')">ম্যাচ</div><div id="t-u" onclick="tab('u')">ইউজার</div><div id="t-w" onclick="tab('w')">পেমেন্ট</div><div id="t-l" onclick="tab('l')">লিমিট</div><div id="t-s" onclick="tab('s')">সেটিংস</div></div>
+
+<section id="s-d" class="sec"><div id="dash"></div></section>
+<section id="s-m" class="sec on">
+ <div class="card"><b>➕ নতুন ম্যাচ</b><div style="height:10px"></div>
+  <label>মোড</label><select id="mode"><option value="king">Ludu King (রুম কোড সহ)</option><option value="auto">Auto Ludu (অ্যাপের ভেতরে)</option></select>
+  <label>টাইটেল (খালি রাখলে অটো)</label><input id="title">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>পুরস্কার ৳</label><input id="prize" type="number"></div><div><label>এন্ট্রি ফি ৳</label><input id="fee" type="number"></div></div>
+  <label>সময়</label><div id="tpw"></div>
+  <label>একসাথে কয়টা ম্যাচ বানাবেন</label><input id="qty" type="number" value="1" min="1"><label>প্রতি ম্যাচের মাঝে গ্যাপ (মিনিট) — কপি বাটনেও এটাই কাজ করবে</label><input id="gap" type="number" value="5" min="0"><label>কপি বাটন চাপলে কয়টা কপি হবে</label><input id="cq" type="number" value="1" min="1">
+  <button class="b" style="width:100%" onclick="add()">ম্যাচ তৈরি করুন</button></div>
+ <button class="b y" style="width:100%;margin-bottom:12px" onclick="shiftAll()">⏱ সব ম্যাচের সময় একসাথে এগোন/পেছান</button><button class="b" id="sch-t2" style="width:100%;margin-bottom:8px" onclick="schTog()">...</button><select id="mf" onchange="rm()"><option value="">সব ম্যাচ</option><option value="open">Open</option><option value="full">Full</option><option value="live">Live</option><option value="done">Done</option></select><div id="ml"></div>
+</section>
+<section id="s-u" class="sec"><input id="us" placeholder="ইউজার খুঁজুন..." oninput="ru()"><div id="ul"></div></section>
+<section id="s-w" class="sec"><div id="wl"></div><div class="d" style="margin:18px 0 10px"><b>⚡ bKash অটো পেমেন্ট রেকর্ড</b> <button class="b y" style="padding:6px 12px" onclick="lp()">🔄</button></div><div id="pl"></div></section>
+<section id="s-l" class="sec"><div class="card"><b>💰 ডিপোজিট লিমিট</b><div style="height:10px"></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>সর্বনিম্ন ৳</label><input id="ld1" type="number"></div><div><label>সর্বোচ্চ ৳</label><input id="ld2" type="number"></div></div>
+ <b>💸 উইথড্র লিমিট</b><div style="height:10px"></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>সর্বনিম্ন ৳</label><input id="lw1" type="number"></div><div><label>সর্বোচ্চ ৳</label><input id="lw2" type="number"></div></div>
+ <button class="b" style="width:100%" onclick="saveLim()">💾 লিমিট সেভ করুন</button></div></section>
+<section id="s-s" class="sec"><div class="card"><b>🤖 Auto Match Scheduler</b><div class="d" id="sch-st" style="margin:8px 0"></div><button class="b" id="sch-t" style="width:100%;margin-bottom:10px" onclick="schTog()">...</button><label>ম্যাচের ইন্টারভাল (মিনিট)</label><select id="sch-i"><option value="0">অটো (আগের গ্যাপ অনুযায়ী)</option><option>5</option><option>10</option><option>15</option><option>20</option></select><label>সর্বোচ্চ আপকামিং ম্যাচ</label><input id="sch-m" type="number" min="1" max="20" value="" placeholder="খালি = অটো (এখনকার ম্যাচ সংখ্যা ধরে রাখবে)"><div class="d">টাইমজোন: Asia/Dhaka · সময় শেষ হলে (১ মিনিট পর) যেসব ম্যাচে ২ জন হয়নি সেগুলো মুছে যাবে, ১ জন থাকলে ফি ফেরত হবে। চালু/লাইভ ম্যাচ কখনো মুছবে না।</div><button class="b" style="width:100%;margin-top:8px" onclick="schSave()">💾 সেভ করুন</button></div><div class="card"><b>📣 সবাইকে নোটিফিকেশন পাঠান</b><div style="height:8px"></div><input id="bt" placeholder="টাইটেল"><input id="bb" placeholder="মেসেজ"><button class="b" style="width:100%" onclick="bcast()">📣 সব ইউজারকে পাঠান</button></div><div class="card">
+ <label>অ্যাপের নাম</label><input id="sn"><label>হোয়াটসঅ্যাপ নম্বর (যেমন 8801XXXXXXXXX)</label><input id="sw">
+ <label>টেলিগ্রাম চ্যানেল লিংক</label><input id="st"><label>নোটিশ</label><input id="so"><label>লোগো ছবির লিংক</label><input id="sl"><label>ব্যানার ছবির লিংক (খালি রাখলে ডিফল্ট)</label><input id="sbn"><label>"কিভাবে খেলবেন" ভিডিও লিংক</label><input id="sv"><label>bKash নম্বর</label><input id="sb"><label>Nagad নম্বর</label><input id="sg">
+ <button class="b" style="width:100%" onclick="save()">💾 সেভ করুন</button></div><button class="b y" style="width:100%;padding:14px" onclick="chPin()">🔑 অ্যাডমিন PIN পরিবর্তন করুন</button></section>
+
+<div id="ed" style="display:none;position:fixed;inset:0;background:#000d;z-index:80;overflow:auto;padding:16px"></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {getDatabase,ref,get,set,update,push,remove,onValue,runTransaction} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const db=getDatabase(initializeApp({apiKey:"AIzaSyB7EsId-DU5_GoBhv_3x6oetsAHfyJB6sM",authDomain:"ef-tournament-fc199.firebaseapp.com",databaseURL:"https://ef-tournament-fc199-default-rtdb.firebaseio.com",projectId:"ef-tournament-fc199",storageBucket:"ef-tournament-fc199.firebasestorage.app",messagingSenderId:"809726085409",appId:"1:809726085409:web:8ba690fb811ad1f5b75660"}));
+const $=id=>document.getElementById(id);let M={},U={},S={},filled=false;
+const fmt=t=>t?new Date(t).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}):'-';
+const rnd=()=>100000+Math.floor(Math.random()*899999);
+window.tab=t=>{['d','m','u','w','l','s'].forEach(k=>{$('t-'+k).classList.toggle('on',k==t);$('s-'+k).classList.toggle('on',k==t)})};
+window.go=async()=>{window.APIN=$('pin').value;const s=await get(ref(db,'settings/pin'));if($('pin').value==String(s.val()||'800900')){$('lock').style.display='none';init()}else alert('ভুল PIN')};
+let D={},W={};
+function init(){$('tpw').innerHTML=tp('time');st('time');onValue(ref(db,'deposit_requests'),s=>{D=s.val()||{};rw()});onValue(ref(db,'withdraw_requests'),s=>{W=s.val()||{};rw()});onValue(ref(db,'matches'),s=>{M=s.val()||{};rm();clientSched(M,S,Date.now())});onValue(ref(db,'users'),s=>{U=s.val()||{};ru()});
+ onValue(ref(db,'settings'),s=>{S=s.val()||{};schUI();clientSched(M,S,Date.now());if(!filled){filled=true;$('sn').value=S.appName||'';$('sw').value=S.whatsapp||'';$('st').value=S.telegram||'';$('so').value=S.notice||'';$('ld1').value=S.minDep||10;$('ld2').value=S.maxDep||50000;$('lw1').value=S.minWd||100;$('lw2').value=S.maxWd||50000;$('sb').value=S.bkash||'';$('sl').value=S.logo||'';$('sbn').value=S.banner||'';$('sv').value=S.video||'';$('sg').value=S.nagad||''}})}
+
+// ----- 12 hour time picker, dashboard, messages -----
+const tp=id=>`<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px"><input id="${id}_d" type="date"><select id="${id}_h">${[...Array(12)].map((_,i)=>`<option>${i+1}</option>`).join('')}</select><select id="${id}_m">${[...Array(60)].map((_,i)=>`<option>${pad(i)}</option>`).join('')}</select><select id="${id}_p"><option>AM</option><option>PM</option></select></div>`;
+window.gt=id=>{const d=$(id+'_d').value;if(!d)return '';let h=+$(id+'_h').value%12;if($(id+'_p').value=='PM')h+=12;return d+'T'+pad(h)+':'+$(id+'_m').value};
+window.st=(id,v)=>{const d=v?new Date(v):new Date();if(isNaN(d))return;$(id+'_d').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());$(id+'_h').value=d.getHours()%12||12;$(id+'_m').value=pad(d.getMinutes());$(id+'_p').value=d.getHours()>=12?'PM':'AM'};
+function rd(){const ms=Object.values(M),us=Object.values(U),sum=k=>us.reduce((x,u)=>x+(u[k]||0),0),c=k=>ms.filter(m=>m.status==k).length,
+ rev=ms.filter(m=>m.status=='done').reduce((x,m)=>x+Math.max(0,(m.fee||0)*2-(m.prize||0)),0),pend=Object.values(D).filter(r=>r.status=='pending').length+Object.values(W).filter(r=>r.status=='pending').length;
+ $('dash').innerHTML=[['👥 মোট ইউজার',us.length],['💰 ইউজারদের ডিপোজিট ব্যালেন্স','৳'+sum('deposit')],['🏆 ইউজারদের উইনিং ব্যালেন্স','৳'+sum('winning')],['📈 আনুমানিক লাভ (ফি×২ − পুরস্কার)','৳'+rev],['🟢 Open ম্যাচ',c('open')],['🟠 Full ম্যাচ',c('full')],['🔵 Live ম্যাচ',c('live')],['✅ শেষ হওয়া ম্যাচ',c('done')],['⏳ পেন্ডিং পেমেন্ট রিকোয়েস্ট',pend]].map(([x,y])=>`<div class="card" style="margin-bottom:8px"><div class="d">${x}</div><b style="font-size:22px">${y}</b></div>`).join('')}
+window.bcast=async()=>{const t=$('bt').value.trim(),b=$('bb').value.trim();if(!t||!b)return alert('টাইটেল ও মেসেজ লিখুন');if(!confirm(Object.keys(U).length+' জনকে পাঠাবেন?'))return;for(const u of Object.keys(U))await push(ref(db,'notifs/'+u),{t,b,ts:Date.now()});$('bt').value=$('bb').value='';alert('পাঠানো হয়েছে ✅')};
+window.msg=async id=>{const t=prompt('টাইটেল');if(!t)return;const b=prompt('মেসেজ');if(!b)return;await push(ref(db,'notifs/'+id),{t,b,ts:Date.now()});alert('পাঠানো হয়েছে ✅')};
+window.ban=async(id,f)=>{if(!confirm(f?'ইউজারকে ব্লক করবেন? (সে আর ম্যাচে জয়েন করতে পারবে না)':'আনব্লক করবেন?'))return;await update(ref(db,'users/'+id),{banned:f})};
+// ----- matches -----
+window.add=async()=>{const q=+$('qty').value||1,mode=$('mode').value;
+ for(let k=0;k<q;k++)await push(ref(db,'matches'),{mode,title:$('title').value||(mode=='king'?'LUDU KING':'AUTO LUDU')+' #'+rnd(),prize:+$('prize').value||0,fee:+$('fee').value||0,time:addMin(gt('time'),gap()*k),status:'open',ts:Date.now()+k});
+ alert('তৈরি হয়েছে ✅')};
+const tm=m=>(m.time&&new Date(m.time).getTime())||m.ts||0;
+const pad=n=>String(n).padStart(2,'0');
+const toLoc=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+const gap=()=>+$('gap').value||0;
+const API='https://storied-treacle-f80757.netlify.app/.netlify/functions/';
+const _tab=window.tab;window.tab=t=>{_tab(t);if(t=='w')lp()};
+window.lp=async()=>{const el=$('pl');el.innerHTML='<div class=d>লোড হচ্ছে...</div>';try{const r=await fetch(API+'admin-payments',{headers:{'x-admin-pin':window.APIN||''}}),j=await r.json();if(!r.ok)throw new Error(j.error);
+ const C={pending:'#fbbf24',executing:'#fbbf24',success:'#4ade80',failed:'#f87171',cancelled:'#f87171'};
+ el.innerHTML=j.items.map(p=>`<div class=card><div class=hd><b>৳${p.amount}</b><span class=pill style="color:${C[p.status]||'#fff'}">${p.status}${p.sandbox?' · TEST':''}</span></div><div class=d>ইউজার: <span>${esc2(p.name)}</span></div><div class=d>bKash TrxID: <span>${esc2(p.trxID||'-')}</span></div><div class=d>পেমেন্ট ID: <span style="font-size:11px">${esc2(p.paymentID||'')}</span></div><div class=d>${fmt(p.createdAt)}${p.reason?' · '+esc2(p.reason):''}</div></div>`).join('')||'<div class=d style="padding:10px">কোনো রেকর্ড নেই</div>'}catch(e){el.innerHTML='<div class=d style="padding:10px">❌ লোড হয়নি: '+esc2(e.message)+'</div>'}};
+const esc2=s=>String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+let schInit=false;
+function schUI(){const c=S.scheduler||{};$('sch-st').innerHTML=(c.on?'🟢 <b>চালু (ON)</b>':'🔴 <b>বন্ধ (OFF)</b>')+(c.lastRun?'<br>শেষ রান: '+fmt(c.lastRun)+' · তৈরি: '+(c.lastCreated||0)+' · মুছেছে: '+(c.lastExpired||0):(c.on?'<br>⚠️ সার্ভার এখনো একবারও চলেনি (Netlify এ scheduler ডেপ্লয় করুন)':''));$('sch-t').textContent=c.on?'⏸ বন্ধ করুন (OFF)':'▶ চালু করুন (ON)';$('sch-t').className='b '+(c.on?'r':'g');$('sch-t2').textContent='🤖 অটো ম্যাচ অ্যাড: '+(c.on?'ON ✅ (বন্ধ করতে চাপুন)':'OFF ⛔ (চালু করতে চাপুন)');$('sch-t2').className='b '+(c.on?'g':'r');if(!schInit&&S.scheduler){schInit=true;$('sch-i').value=c.interval||0;$('sch-m').value=c.max||''}}
+window.schSave=async(on)=>{const c=S.scheduler||{};try{await aw({action:'setScheduler',on:typeof on=='boolean'?on:!!c.on,interval:+$('sch-i').value,max:+$('sch-m').value||0});alert('✅ সেভ হয়েছে')}catch(e){alert('❌ '+e.message)}};
+window.schTog=()=>schSave(!(S.scheduler||{}).on);
+/*SCHED*/
+async function clientSched(MM,SS,t){const c=(SS||{}).scheduler||{};if(!c.on||t-(c.lastRun||0)<180000||window._sch)return;window._sch=1;
+ try{const pr=x=>Date.parse(x+':00+06:00'),fm=ms=>new Date(ms+216e5).toISOString().slice(0,16);
+  const all=Object.entries(MM||{}).filter(([,m])=>m&&m.mode=='auto'&&m.time&&isFinite(pr(m.time)));
+  const exp=all.filter(([,m])=>m.status=='open'&&Object.keys(m.players||{}).length<2&&t>pr(m.time)+6e4),ids=exp.map(x=>x[0]),
+   kept=all.filter(([id])=>!ids.includes(id)),up=kept.filter(([,m])=>m.status=='open'&&pr(m.time)>t);
+  let max=+c.max>0?+c.max:+c.baseMax;if(!max){max=Math.min(20,Math.max(1,all.filter(([,m])=>m.status=='open').length));await update(ref(db,'settings/scheduler'),{baseMax:max})}
+  const tm=kept.map(([,m])=>pr(m.time)).sort((a,b)=>a-b),lt=tm.length?tm[tm.length-1]:0,gp=tm.length>1?lt-tm[tm.length-2]:0,
+   step=[5,10,15,20].includes(+c.interval)?c.interval*6e4:(gp>=3e5?gp:3e5),taken=new Set(kept.map(([,m])=>fm(pr(m.time)))),cr=[];
+  let nx=lt>t?lt+step:Math.ceil((t+6e4)/step)*step;while(cr.length<Math.max(0,max-up.length)){if(!taken.has(fm(nx)))cr.push(nx);nx+=step}
+  const tpl=all.map(x=>x[1]).sort((a,b)=>(b.ts||0)-(a.ts||0))[0];
+  for(const [id,m] of exp){const cl=await runTransaction(ref(db,'matches/'+id+'/exp'),x=>x?undefined:true);if(!cl.committed)continue;
+   for(const u of Object.keys(m.players||{})){await runTransaction(ref(db,'users/'+u+'/deposit'),x=>(x||0)+(m.fee||0));await push(ref(db,'tx/'+u),{type:'ম্যাচ বাতিল — ফি ফেরত',amount:m.fee||0,ts:t});await push(ref(db,'notifs/'+u),{t:'ম্যাচ বাতিল, টাকা ফেরত 💰',b:(m.title||'ম্যাচ')+' — প্রতিপক্ষ আসেনি, ৳'+(m.fee||0)+' ফেরত দেওয়া হয়েছে',ts:t})}
+   await remove(ref(db,'chats/'+id));await remove(ref(db,'games/'+id));await remove(ref(db,'matches/'+id))}
+  if(tpl)for(const ms of cr){const sl=await runTransaction(ref(db,'matchSlots/auto_'+fm(ms).replace(/\D/g,'')),x=>x?undefined:t);if(!sl.committed)continue;
+   await push(ref(db,'matches'),{mode:'auto',title:String(tpl.title||'AUTO LUDU').replace(/#\d+$/,'').trim()+' #'+(100000+Math.floor(Math.random()*899999)),prize:tpl.prize||0,fee:tpl.fee||0,time:fm(ms),status:'open',ts:t,auto:true})}
+ }catch(e){console.warn('sched',e)}finally{window._sch=0}}
+/*ENDSCHED*/
+
+const hist=(e,t)=>{const l=e.filter(([,r])=>r.status!='pending').sort((x,y)=>(y[1].ts||0)-(x[1].ts||0)).slice(0,30),C=s=>/^(approved|paid|done|success)$/.test(s)?['✅ সফল','#4ade80']:/^(rejected|failed|cancelled)$/.test(s)?['❌ বাতিল','#f87171']:['⏳ '+s,'#fbbf24'];return '<div class=d style="margin:16px 0 10px"><b>'+t+'</b></div>'+(l.map(([id,r])=>{const c=C(r.status);return `<div class=card style="padding:12px"><div class=hd><b>৳${r.amount}</b><span style="color:${c[1]};font-weight:800">${c[0]}</span></div><div class=d>${esc2(r.name||'')} · ${esc2(r.method||'')}</div><div class=d>${esc2(r.trx||r.number||'')} · ${fmt(r.ts)}</div></div>`}).join('')||'<div class=d style="padding:10px">কিছু নেই</div>')};
+window.prf=async id=>{const m=M[id],s=await get(ref(db,'proofs/'+id)),l=Object.values(s.val()||{}).sort((x,y)=>x.ts-y.ts),o=document.createElement('div');
+ o.style.cssText='position:fixed;inset:0;background:#000d;z-index:90;overflow:auto;padding:14px';o.onclick=e=>{if(e.target===o)o.remove()};
+ o.innerHTML='<div class=d style="font-size:17px;margin-bottom:10px"><b>📸 প্রুফ — '+esc2(m.title)+'</b></div>'+(l.map(p=>`<div class=card style="padding:12px"><div class=hd><b>👤 ${esc2(p.name)}</b><span class=d>${fmt(p.ts)}</span></div><img src="${p.img}" style="width:100%;border-radius:10px;margin:8px 0"><div class=d>🎮 গেম আইডির নাম: <span>${esc2(p.gameName)}</span></div><div class=d>🔑 রুম কোড: <span>${esc2(p.roomCode)}</span></div>${m.status!='done'?`<button class="b g" style="width:100%;margin-top:10px;padding:13px" onclick="this.parentNode.parentNode.remove();win('${id}','${p.uid}')">🏆 উইনিং দিন (${esc2(p.name)})</button>`:''}</div>`).join('')||'<div class=d style="padding:20px;text-align:center">কেউ এখনো প্রুফ দেয়নি</div>')+'<button class="b r" style="width:100%" onclick="this.parentNode.remove()">বন্ধ করুন</button>';document.body.appendChild(o)};
+const addMin=(t,n)=>{if(!t)return '';const d=new Date(t);return isNaN(d)?t:toLoc(new Date(d.getTime()+n*60000))};
+window.dup=async id=>{const m=M[id],q=+$('cq').value||1;let base=m.time||'';
+ Object.values(M).forEach(x=>{if(x.mode==m.mode&&x.prize==m.prize&&x.fee==m.fee&&x.status!='done'&&x.time&&(!base||new Date(x.time)>new Date(base)))base=x.time});
+ for(let k=1;k<=q;k++)await push(ref(db,'matches'),{mode:m.mode,title:m.title.replace(/#\d+$/,'#'+rnd()),prize:m.prize,fee:m.fee,time:addMin(base,gap()*k),status:'open',ts:Date.now()+k})};
+window.shiftAll=async()=>{const n=+prompt('কত মিনিট এগোবেন? (পেছাতে মাইনাস দিন, যেমন -5)','5');if(!n)return;
+ for(const [id,m] of Object.entries(M))if(m.status!='done'&&m.time)await update(ref(db,'matches/'+id),{time:addMin(m.time,n)});alert('সময় বদলানো হয়েছে ✅')};
+window.closeEd=()=>{$('ed').style.display='none'};
+window.editM=id=>{const m=M[id],o=$('ed');o.style.display='block';
+ o.innerHTML=`<div class=card><b>✏️ ম্যাচ এডিট</b><div style="height:10px"></div><label>টাইটেল</label><input id="e1" value="${m.title}">
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>পুরস্কার ৳</label><input id="e2" type="number" value="${m.prize}"></div><div><label>এন্ট্রি ফি ৳</label><input id="e3" type="number" value="${m.fee}"></div></div>
+ <label>সময়</label>${tp('e4')}<button class="b" style="width:100%;margin-bottom:8px" onclick="saveM('${id}')">💾 সেভ</button><button class="b r" style="width:100%" onclick="closeEd()">বাতিল</button></div>`;st('e4',m.time)};
+window.saveM=async id=>{const m=M[id],fee=+$('e3').value||0;if(m.players&&Object.keys(m.players).length&&fee!=m.fee&&!confirm('প্লেয়ার জয়েন করে ফেলেছে, ফি বদলালে রিফান্ডে গোলমাল হবে। তবুও বদলাবেন?'))return;
+ await update(ref(db,'matches/'+id),{title:$('e1').value,prize:+$('e2').value||0,fee,time:gt('e4')});closeEd()};
+window.room=async id=>{const m=M[id],n=Object.keys(m.players||{}).length;if(n<2&&!confirm('এখনো ২ জন জয়েন করেনি। তবুও কোড দেবেন?'))return;
+ const c=prompt('রুম কোড লিখুন',m.roomCode||'');if(!c||!c.trim())return;await update(ref(db,'matches/'+id),{roomCode:c.trim(),status:n==2?'live':m.status});alert('রুম কোড পাঠানো হয়েছে ✅ প্লেয়াররা ইউজার অ্যাপে দেখবে')};
+window.win=async(id,uid)=>{const m=M[id];if(!confirm(m.players[uid].name+' কে বিজয়ী ঘোষণা করে ৳'+m.prize+' দেবেন?'))return;
+ const r=await runTransaction(ref(db,'matches/'+id+'/paid'),c=>c?undefined:true);
+ if(!r.committed)return alert('আগেই পেমেন্ট হয়ে গেছে');
+ await runTransaction(ref(db,'users/'+uid+'/winning'),c=>(c||0)+(m.prize||0));await runTransaction(ref(db,'users/'+uid+'/wins'),c=>(c||0)+1);await runTransaction(ref(db,'users/'+uid+'/earned'),c=>(c||0)+(m.prize||0));await runTransaction(ref(db,'weekly/'+Math.floor(Date.now()/604800000)+'/'+uid),c=>{c=c||{name:m.players[uid].name,wins:0,earned:0};c.wins++;c.earned+=m.prize||0;return c});await push(ref(db,'tx/'+uid),{type:'ম্যাচ জয়ের পুরস্কার — '+(m.title||''),amount:m.prize||0,ts:Date.now()});
+ const lo=Object.keys(m.players).find(x=>x!=uid);
+ await push(ref(db,'notifs/'+uid),{t:'🏆 অভিনন্দন, আপনি জিতেছেন!',b:'উইনিং ৳'+(m.prize||0)+' আপনার ওয়ালেটে যোগ করা হয়েছে ('+(m.title||'ম্যাচ')+')',ts:Date.now()});
+ if(lo){await push(ref(db,'tx/'+lo),{type:'ম্যাচ লস্ট ❌ — '+(m.title||''),amount:0,ts:Date.now()});await push(ref(db,'notifs/'+lo),{t:'😔 ম্যাচ লস্ট',b:(m.title||'ম্যাচ')+' এ আপনি হেরেছেন। পরের ম্যাচে শুভকামনা!',ts:Date.now()})}
+ await update(ref(db,'matches/'+id),{status:'done',winner:uid,winnerName:m.players[uid].name,doneAt:Date.now()})};
+window.del=async id=>{const m=M[id];if(!confirm('ম্যাচ ডিলিট করবেন? (এন্ট্রি ফি ফেরত যাবে)'))return;
+ if(m.status!='done'&&m.players)for(const u of Object.keys(m.players))await runTransaction(ref(db,'users/'+u+'/deposit'),c=>(c||0)+m.fee);
+ await remove(ref(db,'matches/'+id));await remove(ref(db,'games/'+id))};
+function rm(){rd();const l=Object.entries(M).sort((a,b)=>(a[1].status=='done')-(b[1].status=='done')||tm(a[1])-tm(b[1])).filter(([,m])=>!$('mf').value||m.status==$('mf').value);
+ $('ml').innerHTML=l.map(([id,m])=>{const pl=m.players||{},ids=Object.keys(pl);
+  return `<div class=card><div class=hd><b>${m.mode=='king'?'👑':'🎲'} ${m.title}</b><span class="pill ${m.status}">${m.status}</span></div>
+  <div class=d>সময়: <span>${fmt(m.time)}</span></div><div class=d>পুরস্কার: <span>৳${m.prize}</span> · এন্ট্রি: <span>৳${m.fee}</span> · প্লেয়ার: <span>${ids.length}/2</span></div>
+  ${ids.map(u=>`<div class=d>👤 <span>${pl[u].name}</span>${m.prf&&m.prf[u]?' 📸 প্রুফ দিয়েছে':''}</div>`).join('')}
+  ${m.winnerName?`<div class=d>🏆 বিজয়ী: <span>${m.winnerName}</span></div>`:''}
+  ${m.mode=='king'&&m.status!='done'?`<button class="b g" style="width:100%;padding:13px;margin-top:10px" onclick="room('${id}')">🔑 ${m.roomCode?'রুম কোড বদলান ('+m.roomCode+')':'রুম কোড পাঠান'}</button>`:''}
+  ${m.mode=='king'&&ids.length==2?`<button class="b y" style="width:100%;padding:12px;margin-top:8px" onclick="prf('${id}')">📸 প্রুফ দেখুন${m.prf?' ('+Object.keys(m.prf).length+')':''}</button>`:''}
+  <div class=act>${ids.length==2&&m.status!='done'?ids.map(u=>`<button class="b y" onclick="win('${id}','${u}')">🏆 ${pl[u].name}</button>`).join(''):''}
+  <button class=b style="flex:1;padding:12px" onclick="dup('${id}')">📋 কপি (সময় +গ্যাপ)</button><button class="b y" onclick="editM('${id}')">✏️ এডিট</button><button class="b r" onclick="del('${id}')">🗑</button></div></div>`}).join('')||'<div style="text-align:center;color:#8892b0;padding:30px">কোনো ম্যাচ নেই</div>'}
+
+// ----- users -----
+function ru(){rd();const q=$('us').value.toLowerCase();
+ $('ul').innerHTML=Object.entries(U).filter(([,u])=>!q||(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)).map(([id,u])=>
+ `<div class=card><div class=hd><b>${u.name||'-'}</b></div><div class=d>${u.email} · ${u.phone||''}</div>
+  <div class=d>ডিপোজিট: <span>৳${u.deposit||0}</span> · উইনিং: <span>৳${u.winning||0}</span> · জয়: <span>${u.wins||0}</span>${u.banned?' · 🚫 ব্লক':''}</div>
+  <div class=act><button class=b onclick="bal('${id}',${u.deposit||0},${u.winning||0})">ব্যালেন্স এডিট</button><button class="b y" onclick="msg('${id}')">🔔 মেসেজ</button><button class="b ${u.banned?'g':'r'}" onclick="ban('${id}',${!u.banned})">${u.banned?'আনব্লক':'🚫 ব্লক'}</button></div></div>`).join('')}
+window.bal=async(id,d,w)=>{const nd=prompt('ডিপোজিট ব্যালেন্স',d);if(nd===null)return;const nw=prompt('উইনিং ব্যালেন্স',w);if(nw===null)return;try{await aw({action:'setBalance',uid:id,deposit:+nd||0,winning:+nw||0});alert('✅ হয়েছে')}catch(e){alert('❌ '+e.message)}};
+
+// ----- payments -----
+function rw(){const dp=Object.entries(D).filter(([,r])=>r.status=='pending'),wd=Object.entries(W).filter(([,r])=>r.status=='pending'),n=dp.length+wd.length;
+ $('t-w').textContent='পেমেন্ট'+(n?' ('+n+')':'');
+ const none='<div class=d style="padding:10px">কিছু নেই</div>';
+ $('wl').innerHTML='<div class=d style="margin:6px 0 10px"><b>💰 ডিপোজিট রিকোয়েস্ট</b></div>'+(dp.map(([id,r])=>`<div class=card><div class=hd><b>৳${r.amount}</b><span class="pill full">${r.method}</span></div><div class=d>ইউজার: <span>${r.name}</span></div><div class=d>TrxID: <span>${r.trx}</span></div><div class=d>${fmt(r.ts)}</div><div class=act><button class="b g" onclick="appDep('${id}')">✅ Approve</button><button class="b r" onclick="rejDep('${id}')">❌ Reject</button></div></div>`).join('')||none)
+ +hist(Object.entries(D),'💰 ডিপোজিট হিস্ট্রি')+'<div class=d style="margin:16px 0 10px"><b>💸 উইথড্র রিকোয়েস্ট</b></div>'+(wd.map(([id,r])=>`<div class=card><div class=hd><b>৳${r.amount}</b><span class="pill full">${r.method}</span></div><div class=d>ইউজার: <span>${r.name}</span></div><div class=d>নম্বর: <span>${r.number}</span></div><div class=d>${fmt(r.ts)}</div><div class=act><button class="b g" onclick="appWd('${id}')">✅ টাকা পাঠিয়েছি</button><button class="b r" onclick="rejWd('${id}')">❌ Reject (ফেরত)</button></div></div>`).join('')||none)+hist(Object.entries(W),'💸 উইথড্র হিস্ট্রি')}
+async function awLocal(b){
+ if(b.action=='setScheduler'){await update(ref(db,'settings/scheduler'),{on:b.on===true,interval:b.interval,max:b.max,baseMax:b.max>0?b.max:null,tz:'Asia/Dhaka',updatedAt:Date.now()});return{ok:true}}
+ if(b.action=='setBalance'){await update(ref(db,'users/'+b.uid),{deposit:b.deposit,winning:b.winning});return{ok:true}}
+ if(b.action=='approveDeposit'){const r=D[b.id];if(!r||r.status!='pending')throw new Error('রিকোয়েস্ট পেন্ডিং নেই');
+  const c=await runTransaction(ref(db,'AutoPay/'+r.trx),x=>x?undefined:{uid:r.uid,amount:+r.amount,ts:Date.now(),manual:true});
+  if(!c.committed){await update(ref(db,'deposit_requests/'+b.id),{status:'rejected'});throw new Error('এই TrxID আগেই ব্যবহৃত')}
+  await runTransaction(ref(db,'users/'+r.uid+'/deposit'),x=>(x||0)+(+r.amount));await push(ref(db,'tx/'+r.uid),{type:'ডিপোজিট',amount:+r.amount,ts:Date.now()});await update(ref(db,'deposit_requests/'+b.id),{status:'approved'});return{ok:true}}
+ throw new Error('unknown action')}
+// Uses the secure Netlify server when it is deployed; if the server is unreachable, falls back to a direct Firebase write.
+window.aw=async b=>{let r,t;try{r=await fetch(API+'admin-wallet',{method:'POST',headers:{'Content-Type':'application/json','x-admin-pin':window.APIN||''},body:JSON.stringify(b)});t=await r.text()}catch(e){return awLocal(b)}
+ let j=null;try{j=JSON.parse(t)}catch(e){}
+ if(!j||r.status==404)return awLocal(b);
+ if(!r.ok||!j.ok)throw new Error(j.error||'সার্ভার এরর');return j};
+window.appDep=async id=>{const r=D[id];if(!confirm('৳'+r.amount+' ডিপোজিট যোগ করবেন?'))return;try{await aw({action:'approveDeposit',id});alert('✅ যোগ হয়েছে')}catch(e){alert('❌ '+e.message)}};
+window.rejDep=id=>update(ref(db,'deposit_requests/'+id),{status:'rejected'});
+window.appWd=id=>update(ref(db,'withdraw_requests/'+id),{status:'approved'});
+window.rejWd=async id=>{const r=W[id];if(!confirm('রিজেক্ট করে ৳'+r.amount+' ফেরত দেবেন?'))return;await runTransaction(ref(db,'users/'+r.uid+'/winning'),x=>(x||0)+r.amount);await push(ref(db,'tx/'+r.uid),{type:'উইথড্র ফেরত',amount:r.amount,ts:Date.now()});await update(ref(db,'withdraw_requests/'+id),{status:'rejected'})};
+
+window.saveLim=async()=>{const v=id=>+$(id).value||0;if(v('ld1')>v('ld2')||v('lw1')>v('lw2'))return alert('সর্বনিম্ন সর্বোচ্চের চেয়ে বড় হতে পারবে না');
+ await update(ref(db,'settings'),{minDep:v('ld1'),maxDep:v('ld2'),minWd:v('lw1'),maxWd:v('lw2')});alert('লিমিট সেভ হয়েছে ✅')};
+window.chPin=async()=>{const cur=prompt('বর্তমান PIN দিন');if(cur===null)return;const s=await get(ref(db,'settings/pin'));
+ if(cur!=String(s.val()||'800900'))return alert('বর্তমান PIN ভুল');const n=prompt('নতুন PIN (৪-১০ সংখ্যা)');
+ if(!n||!/^\d{4,10}$/.test(n))return alert('PIN অবশ্যই ৪-১০ সংখ্যার হতে হবে');await update(ref(db,'settings'),{pin:n});alert('PIN পরিবর্তন হয়েছে ✅')};
+
+// ----- settings -----
+window.save=async()=>{await update(ref(db,'settings'),{appName:$('sn').value,whatsapp:$('sw').value,telegram:$('st').value,notice:$('so').value,bkash:$('sb').value,logo:$('sl').value,banner:$('sbn').value,video:$('sv').value,nagad:$('sg').value});alert('সেভ হয়েছে ✅')};
+setInterval(()=>clientSched(M,S,Date.now()),30000);
+</script></body></html>
